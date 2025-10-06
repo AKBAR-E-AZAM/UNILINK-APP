@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Users to Firebase</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: #f5f5f5; }
+        button { padding: 12px 24px; margin: 10px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+        #uploadBtn { background: #4CAF50; color: white; }
+        #checkBtn { background: #2196F3; color: white; }
+        #clearBtn { background: #ff9800; color: white; }
+        #fixRulesBtn { background: #9c27b0; color: white; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        #output { margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; min-height: 200px; font-family: monospace; background: white; max-height: 500px; overflow-y: auto; }
+        .success { color: #2ecc71; font-weight: 500; }
+        .error { color: #e74c3c; font-weight: 500; }
+        .info { color: #3498db; }
+        .warning { color: #f39c12; }
+        h2 { color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
+        .instructions { background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50; }
+        .cred-box { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #2196F3; }
+    </style>
+</head>
+<body>
+    <h2>📤 Upload ALL Users to Firebase</h2>
+    
+    <div class="instructions">
+        <strong>⚠️ IMPORTANT: Follow these steps:</strong>
+        <ol>
+            <li>Go to <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a></li>
+            <li>Select project: <strong>unilink-app-d1042</strong></li>
+            <li>Go to <strong>Firestore Database → Rules</strong></li>
+            <li>Replace with rules below and click "Publish"</li>
+        </ol>
+    </div>
+
+    <div class="cred-box">
+        <strong>🔑 CORRECT FIRESTORE RULES:</strong><br>
+        <code>
+        rules_version = '2';<br>
+        service cloud.firestore {<br>
+        &nbsp;&nbsp;match /databases/{database}/documents {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;}<br>
+        }
+        </code>
+    </div>
+    
+    <button id="uploadBtn" onclick="uploadUsers()">Upload ALL 52 Users to Firebase</button>
+    <button id="checkBtn" onclick="checkUsers()">Check Existing Users</button>
+    <button id="fixRulesBtn" onclick="showFirestoreRules()">Copy Firestore Rules</button>
+    <button id="clearBtn" onclick="clearOutput()">Clear Output</button>
+    
+    <div id="output">Click a button to start...</div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+          apiKey: "your-copied-api-key",
+          authDomain: "your-project.firebaseapp.com",
+          projectId: "your-project-id",
+          storageBucket: "your-project.appspot.com",
+          messagingSenderId: "123456789",
+          appId: "your-app-id",
+          measurementId: "G-XXXXXXXXXX"
+      };// PASTE YOUR FIREBASE CONFIG HERE
+
+        // Initialize Firebase
+        let db;
+        try {
+            if (typeof firebase !== 'undefined') {
+                if (firebase.apps.length === 0) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.firestore();
+                console.log('✅ Firebase initialized in migrate.html');
+            }
+        } catch (error) {
+            console.error('❌ Firebase init error in migrate.html:', error);
+        }
+
+        // COMPLETE USERS DATA - ALL 52 USERS
+       ''' const usersData = [
+  {
+    "username": "STUDENT001",// THIS WILL BE THE LOGIN USERNAME
+    "password": "05/06/2005",// THIS WILL BE THE LOGIN PASSWORD (DOB)
+    "role": "student",
+    "name": "PRIYA K S",
+    "dept": "B.E. CSE",
+    "year": "2022-2026",
+    "blood": "B+",
+    "photo": "https://i.pravatar.cc/150?img=1"
+  },// ADD STUDENT DETAILS LIKE THIS
+  {
+    "username": "STUDENT002",// THIS WILL BE THE LOGIN USERNAME
+    "password": "15/08/2004",// THIS WILL BE THE LOGIN PASSWORD (DOB)
+    "role": "student",
+    "name": "RAJESH KUMAR S",
+    "dept": "B.E. CSE",
+    "year": "2022-2026",
+    "blood": "O+",
+    "photo": "https://i.pravatar.cc/150?img=2"
+  },
+  {
+    "username": "STAFF001",// THIS WILL BE THE LOGIN USERNAME
+    "password": "01/01/1980",// THIS WILL BE THE LOGIN PASSWORD (DOB)
+    "role": "staff",
+    "name": "Dr. Alan Turing",
+    "dept": "B.E. CSE",
+    "year": "N/A",
+    "blood": "O-",
+    "photo": "https://i.pravatar.cc/150?img=51",
+    "timetable": [
+      { "day": "Monday", "start": "9:00", "end": "10:00", "activity": "AI Lecture" },
+      { "day": "Tuesday", "start": "11:00", "end": "12:30", "activity": "Lab Session" },
+      { "day": "Friday", "start": "14:00", "end": "15:00", "activity": "Research Meet" }
+    ]
+  },// ADD STAFF DETAILS LIKE THIS
+  {
+    "username": "HOD001",// THIS WILL BE THE LOGIN USERNAME
+    "password": "10/02/1975",// THIS WILL BE THE LOGIN PASSWORD (DOB)
+    "role": "hod",
+    "name": "Prof. Grace Hopper",
+    "dept": "B.E. CSE",
+    "year": "N/A",
+    "blood": "A+",
+    "photo": "https://i.pravatar.cc/150?img=52"
+  }// ADD HOD DETAILS LIKE THIS
+];''' // PASTE ALL USERS DATA HERE'
+
+        const output = document.getElementById('output');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `<div class="${type}">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function uploadUsers() {
+            log('🚀 Starting user upload process...', 'info');
+            log(`📦 Uploading ${usersData.length} users to Firebase...`, 'info');
+            
+            if (!db) {
+                log('❌ Firebase Firestore not initialized. Please check your Firebase configuration.', 'error');
+                return;
+            }
+
+            try {
+                let uploaded = 0;
+                let skipped = 0;
+                let errors = 0;
+                
+                // Test Firestore connection first
+                try {
+                    await db.collection('users').limit(1).get();
+                    log('✅ Firestore connection successful', 'success');
+                } catch (testError) {
+                    log(`❌ Firestore connection failed: ${testError.message}`, 'error');
+                    log('💡 Please check Firestore security rules (click "Copy Firestore Rules" button)', 'info');
+                    return;
+                }
+                
+                for (const user of usersData) {
+                    try {
+                        // Check if user already exists
+                        const existing = await db.collection('users')
+                            .where('username', '==', user.username)
+                            .get();
+                            
+                        if (existing.empty) {
+                            await db.collection('users').add(user);
+                            log(`✅ Uploaded: ${user.name} (${user.username})`, 'success');
+                            uploaded++;
+                        } else {
+                            log(`⚠️ Skipped (already exists): ${user.name}`, 'warning');
+                            skipped++;
+                        }
+                    } catch (error) {
+                        log(`❌ Error uploading ${user.name}: ${error.message}`, 'error');
+                        errors++;
+                        
+                        // If it's a permission error, stop the process
+                        if (error.code === 'permission-denied') {
+                            log('🔒 Permission denied. Please check Firestore security rules.', 'error');
+                            log('💡 Click the "Copy Firestore Rules" button for instructions', 'info');
+                            break;
+                        }
+                    }
+                    
+                    // Small delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                
+                log(`🎉 UPLOAD COMPLETED!`, 'success');
+                log(`📊 Summary: Uploaded: ${uploaded}, Skipped: ${skipped}, Errors: ${errors}`, 'info');
+                log(`💡 Total users in database: ${uploaded + skipped}`, 'info');
+                
+                if (errors > 0) {
+                    log('🔧 Some users failed to upload. Check the errors above and fix Firestore rules.', 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Upload process failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkUsers() {
+            log('🔍 Checking existing users in Firebase...', 'info');
+            
+            if (!db) {
+                log('❌ Firebase Firestore not initialized.', 'error');
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('users').get();
+                log(`📊 Total users in Firebase: ${snapshot.size}`, 'info');
+                
+                if (snapshot.size === 0) {
+                    log('No users found in database. Click "Upload ALL 52 Users" to add users.', 'warning');
+                    return;
+                }
+                
+                // Group by role
+                const roles = {};
+                snapshot.forEach(doc => {
+                    const user = doc.data();
+                    if (!roles[user.role]) {
+                        roles[user.role] = [];
+                    }
+                    roles[user.role].push(user);
+                });
+                
+                // Display by role
+                Object.keys(roles).forEach(role => {
+                    log(`👥 ${role.toUpperCase()} (${roles[role].length} users):`, 'info');
+                    roles[role].forEach(user => {
+                        log(`   👤 ${user.name} - ${user.username}`, 'info');
+                    });
+                });
+                
+            } catch (error) {
+                log(`❌ Error checking users: ${error.message}`, 'error');
+                if (error.code === 'permission-denied') {
+                    log('💡 Please fix Firestore security rules first', 'info');
+                }
+            }
+        }
+
+        function showFirestoreRules() {
+            const rules = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}`;
+
+            log('🔧 CORRECT FIRESTORE RULES:', 'info');
+            log('Follow these steps:', 'info');
+            log('1. Go to: https://console.firebase.google.com/', 'info');
+            log('2. Select project: unilink-app-d1042', 'info');
+            log('3. Go to: Firestore Database → Rules', 'info');
+            log('4. DELETE existing rules and PASTE this:', 'info');
+            log('', 'info');
+            log('COPY THE RULES BELOW:', 'warning');
+            log(rules, 'info');
+            log('', 'info');
+            log('5. Click "Publish"', 'info');
+            log('6. Come back here and upload users', 'info');
+            
+            // Copy to clipboard if possible
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(rules).then(() => {
+                    log('📋 Rules copied to clipboard!', 'success');
+                });
+            }
+        }
+
+        function clearOutput() {
+            output.innerHTML = 'Output cleared. Click a button to start...';
+        }
+
+        // Check Firebase on load
+        window.addEventListener('load', function() {
+            if (db) {
+                log('✅ Firebase is ready! You can start uploading users.', 'success');
+                log('💡 Click "Check Existing Users" to see current database status', 'info');
+            } else {
+                log('❌ Firebase is not initialized. Please check the configuration.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+''' const usersData = [
+  {
+    "username": "STUDENT001",// THIS WILL BE THE LOGIN USERNAME
+    "password": "05/06/2005",// THIS WILL BE THE LOGIN PASSWORD (DOB)
+    "role": "student",
+    "name": "PRIYA K S",
+    "dept": "B.E. CSE",
+    "year": "2022-2026",
+    "blood": "B+",
+    "photo": "https://i.pravatar.cc/150?img=1"
+  },// ADD STUDENT DETAILS LIKE THIS
+  {
+    "username": "STUDENT002",// THIS WILL BE THE LOGIN USERNAME
+    "password": "15/08/2004",// THIS WILL BE THE LOGIN PASSWORD (DOB)
+    "role": "student",
+    "name": "RAJESH KUMAR S",
+    "dept": "B.E. CSE",
+    "year": "2022-2026",
+    "blood": "O+",
+    "photo": "https://i.pravatar.cc/150?img=2"
+  },
+  {
+    "username": "STAFF001",// THIS WILL BE THE LOGIN USERNAME
+    "password": "01/01/1980",// THIS WILL BE THE LOGIN PASSWORD (DOB)
+    "role": "staff",
+    "name": "Dr. Alan Turing",
+    "dept": "B.E. CSE",
+    "year": "N/A",
+    "blood": "O-",
+    "photo": "https://i.pravatar.cc/150?img=51",
+    "timetable": [
+      { "day": "Monday", "start": "9:00", "end": "10:00", "activity": "AI Lecture" },
+      { "day": "Tuesday", "start": "11:00", "end": "12:30", "activity": "Lab Session" },
+      { "day": "Friday", "start": "14:00", "end": "15:00", "activity": "Research Meet" }
+    ]
+  },// ADD STAFF DETAILS LIKE THIS
+  {
+    "username": "HOD001",// THIS WILL BE THE LOGIN USERNAME
+    "password": "10/02/1975",// THIS WILL BE THE LOGIN PASSWORD (DOB)
+    "role": "hod",
+    "name": "Prof. Grace Hopper",
+    "dept": "B.E. CSE",
+    "year": "N/A",
+    "blood": "A+",
+    "photo": "https://i.pravatar.cc/150?img=52"
+  }// ADD HOD DETAILS LIKE THIS
+];''' // PASTE ALL USERS DATA HERE'

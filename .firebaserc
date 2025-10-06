@@ -1,0 +1,5 @@
+{
+  "projects": {
+    "default": "unilink-app-XXXX" // REPLACE XXXX WITH YOUR PROJECT ID IN FIREBASE CONSOLE
+  }
+}

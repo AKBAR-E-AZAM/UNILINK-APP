@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniLink - Time Saver</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <!-- LOGIN PAGE -->
+  <div id="loginPage" class="login-page">
+    <div class="login-box">
+      <h2>UniLink Login</h2>
+      <form id="loginForm">
+        <input type="text" id="username" placeholder="Register No." required>
+        <input type="password" id="password" placeholder="D.O.B (DD/MM/YYYY)" required>
+        <select id="role" required>
+          <option value="" disabled selected>Select Role</option>
+          <option value="student">Student</option>
+          <option value="staff">Staff</option>
+          <option value="hod">HOD</option>
+        </select>
+        <button type="submit">Login</button>
+      </form>
+      <p id="loginError" class="error">Invalid Register No. or DOB!</p>
+    </div>
+  </div>
+
+  <!-- APP PAGE -->
+  <div id="appPage" class="hidden">
+    <nav class="navbar">
+      <div class="logo">UNILINK</div>
+      <ul id="navList"></ul>
+    </nav>
+
+    <main>
+      <!-- Home -->
+      <section id="homePage" class="page">
+        <h1 id="welcomeTitle"></h1>
+        <p id="roleInfo"></p>
+        <h2>Staff Directory</h2>
+        <div id="staffContainer" class="staff-container"></div>
+      </section>
+
+      <!-- Timetable -->
+      <section id="timetablePage" class="page hidden">
+        <h1>My Timetable</h1>
+        <p>Your personal timetable would appear here.</p>
+      </section>
+
+      <!-- Alerts -->
+      <section id="alertPage" class="page hidden">
+        <h1>Alerts & Notifications</h1>
+        <ul id="alertList"></ul>
+      </section>
+
+      <!-- Profile -->
+      <section id="profilePage" class="page hidden">
+        <h1>My Profile</h1>
+        <div id="profileContainer"></div>
+      </section>
+
+      <!-- Settings -->
+      <section id="settingsPage" class="page hidden">
+        <h1>Settings</h1>
+        <div class="settings-box">
+          <h2>Preferences</h2>
+          
+          <label>
+            Dark Mode
+            <span class="toggle">
+              <input type="checkbox" id="themeSwitch">
+              <span class="slider"></span>
+            </span>
+          </label>
+
+          <label>
+            Set Status: Busy
+            <span class="toggle">
+              <input type="checkbox" id="busySwitch">
+              <span class="slider"></span>
+            </span>
+          </label>
+
+          <label>
+            Meeting Mode (Prioritize Meetings)
+            <span class="toggle">
+              <input type="checkbox" id="meetingSwitch">
+              <span class="slider"></span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Admin Panel (HOD Only) -->
+      <section id="adminPage" class="page hidden">
+        <h1>Admin Panel</h1>
+        <div class="admin-controls">
+          <button onclick="adminPanel.addUser()" class="btn-primary">Add New User</button>
+          <button onclick="adminPanel.exportUsers()" class="btn-secondary">Export Users</button>
+        </div>
+        <div class="users-table-container">
+          <table id="adminUsersTable" class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Department</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Timetable Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span id="closeBtn" class="close">&times;</span>
+      <h2 id="staffName"></h2>
+      <table id="timetable">
+        <thead>
+          <tr><th>Day</th><th>Start</th><th>End</th><th>Activity</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Meeting Modal -->
+  <div id="meetModal" class="modal">
+    <div class="modal-content">
+      <span id="meetCloseBtn" class="close">&times;</span>
+      <h2 id="meetStaffName">Request Meeting</h2>
+      <input type="text" id="meetingPurpose" placeholder="Enter purpose of meeting" required>
+      <button id="confirmMeet">Confirm Meeting Request</button>
+    </div>
+  </div>
+
+  <!-- Edit User Modal (for Admin Panel) -->
+  <div id="editUserModal" class="modal">
+    <div class="modal-content">
+      <span id="editUserCloseBtn" class="close">&times;</span>
+      <h2>Edit User</h2>
+      <div id="editUserName" style="margin-bottom: 20px; font-weight: 600; color: var(--primary-color);"></div>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Name:</label>
+        <input type="text" id="editUserNameInput" placeholder="Enter user name">
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Username:</label>
+        <input type="text" id="editUserUsernameInput" placeholder="Enter username">
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Role:</label>
+        <select id="editUserRoleSelect">
+          <option value="student">Student</option>
+          <option value="staff">Staff</option>
+          <option value="hod">HOD</option>
+        </select>
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Department:</label>
+        <input type="text" id="editUserDeptInput" placeholder="Enter department">
+      </div>
+      
+      <div style="display: flex; gap: 10px;">
+        <button id="saveUserChanges" class="btn-primary" style="flex: 1;">Save Changes</button>
+        <button onclick="adminPanel.closeEditModal()" class="btn-secondary" style="flex: 1;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add User Modal (for Admin Panel) -->
+  <div id="addUserModal" class="modal">
+    <div class="modal-content">
+      <span id="addUserCloseBtn" class="close">&times;</span>
+      <h2>Add New User</h2>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Name:</label>
+        <input type="text" id="addUserNameInput" placeholder="Enter full name">
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Username:</label>
+        <input type="text" id="addUserUsernameInput" placeholder="Enter username">
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Password:</label>
+        <input type="password" id="addUserPasswordInput" placeholder="Enter password">
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Role:</label>
+        <select id="addUserRoleSelect">
+          <option value="student">Student</option>
+          <option value="staff">Staff</option>
+          <option value="hod">HOD</option>
+        </select>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Department:</label>
+        <input type="text" id="addUserDeptInput" placeholder="Enter department">
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Academic Year:</label>
+        <input type="text" id="addUserYearInput" placeholder="Enter academic year">
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Blood Group:</label>
+        <input type="text" id="addUserBloodInput" placeholder="Enter blood group">
+      </div>
+      
+      <div style="display: flex; gap: 10px;">
+        <button id="saveNewUser" class="btn-primary" style="flex: 1;">Add User</button>
+        <button onclick="adminPanel.closeAddModal()" class="btn-secondary" style="flex: 1;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

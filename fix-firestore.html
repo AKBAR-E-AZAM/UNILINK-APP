@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FIX FIRESTORE RULES</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: #fff3cd; }
+        textarea { width: 100%; height: 150px; font-family: monospace; margin: 10px 0; border: 2px solid #28a745; }
+        button { padding: 15px 30px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px; }
+        .success { background: #d4edda; padding: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🚨 FIX FIRESTORE PERMISSIONS ERROR</h1>
+    
+    <div class="success">
+        <h3>STEP-BY-STEP FIX:</h3>
+        <ol>
+            <li>Go to <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a></li>
+            <li>Select project: <strong>unilink-app-d1042</strong></li>
+            <li>Go to <strong>Firestore Database → Rules</strong></li>
+            <li>DELETE all existing rules</li>
+            <li>PASTE the rules below</li>
+            <li>Click <strong>"PUBLISH"</strong></li>
+        </ol>
+    </div>
+
+    <h3>COPY AND PASTE THESE EXACT RULES:</h3>
+    <textarea id="rulesText" readonly>rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}</textarea>
+    
+    <button onclick="copyRules()">📋 COPY RULES TO CLIPBOARD</button>
+    
+    <script>
+        function copyRules() {
+            const textarea = document.getElementById('rulesText');
+            textarea.select();
+            document.execCommand('copy');
+            alert('✅ Rules copied! Now go to Firebase Console and PASTE them in Firestore Rules, then click PUBLISH!');
+        }
+    </script>
+
+    <h3>After fixing rules:</h3>
+    <ul>
+        <li>Open <code>migrate.html</code> and upload users</li>
+        <li>Then open <code>index.html</code> to test login</li>
+    </ul>
+</body>
+</html>
