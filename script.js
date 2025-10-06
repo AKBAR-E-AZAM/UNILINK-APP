@@ -1,13 +1,13 @@
 // Firebase Configuration
 const firebaseConfig = {
-          apiKey: "your-copied-api-key",
-          authDomain: "your-project.firebaseapp.com",
-          projectId: "your-project-id",
-          storageBucket: "your-project.appspot.com",
-          messagingSenderId: "123456789",
-          appId: "your-app-id",
-          measurementId: "G-XXXXXXXXXX"
-      };// PASTE YOUR FIREBASE CONFIG HERE
+    apiKey: "your-copied-api-key",
+    authDomain: "your-project.firebaseapp.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "your-app-id",
+    measurementId: "G-XXXXXXXXXX"
+};// PASTE YOUR FIREBASE CONFIG HERE
 
 // Initialize Firebase
 let db;
@@ -593,6 +593,7 @@ const adminPanel = {
             console.log('👨‍💼 Initializing admin panel for HOD');
             await this.loadUsersTable();
             this.setupEditModal();
+            this.setupAddModal();
         }
     },
 
@@ -612,6 +613,26 @@ const adminPanel = {
         window.addEventListener('click', (e) => {
             if (e.target === editModal) {
                 this.closeEditModal();
+            }
+        });
+    },
+
+    setupAddModal: function() {
+        const addModal = document.getElementById('addUserModal');
+        const closeBtn = document.getElementById('addUserCloseBtn');
+        const saveBtn = document.getElementById('saveNewUser');
+
+        if (closeBtn) {
+            closeBtn.onclick = () => this.closeAddModal();
+        }
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveNewUser());
+        }
+
+        window.addEventListener('click', (e) => {
+            if (e.target === addModal) {
+                this.closeAddModal();
             }
         });
     },
@@ -662,6 +683,32 @@ const adminPanel = {
         }
     },
 
+    openAddModal: function() {
+        const addModal = document.getElementById('addUserModal');
+        if (addModal) {
+            addModal.style.display = 'flex';
+            
+            // Clear form fields
+            document.getElementById('addUserNameInput').value = '';
+            document.getElementById('addUserUsernameInput').value = '';
+            document.getElementById('addUserPasswordInput').value = '';
+            document.getElementById('addUserRoleSelect').value = 'student';
+            document.getElementById('addUserDeptInput').value = '';
+            document.getElementById('addUserYearInput').value = '';
+            document.getElementById('addUserBloodInput').value = '';
+            
+            // Focus on first field
+            document.getElementById('addUserNameInput').focus();
+        }
+    },
+
+    closeAddModal: function() {
+        const addModal = document.getElementById('addUserModal');
+        if (addModal) {
+            addModal.style.display = 'none';
+        }
+    },
+
     saveUserChanges: async function() {
         if (!this.currentEditingUser) return;
 
@@ -687,6 +734,53 @@ const adminPanel = {
         } catch (error) {
             console.error('Error saving user changes:', error);
             meetingSystem.showToast('❌ Error saving changes: ' + error.message, 'error');
+        }
+    },
+
+    saveNewUser: async function() {
+        try {
+            const userData = {
+                name: document.getElementById('addUserNameInput').value.trim(),
+                username: document.getElementById('addUserUsernameInput').value.trim(),
+                password: document.getElementById('addUserPasswordInput').value,
+                role: document.getElementById('addUserRoleSelect').value,
+                dept: document.getElementById('addUserDeptInput').value.trim(),
+                year: document.getElementById('addUserYearInput').value.trim(),
+                blood: document.getElementById('addUserBloodInput').value.trim(),
+                photo: 'https://i.pravatar.cc/150?img=' + Math.floor(Math.random() * 70),
+                status: 'available',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Validate inputs
+            if (!userData.name || !userData.username || !userData.password || !userData.dept) {
+                meetingSystem.showToast('⚠️ Please fill in all required fields', 'warning');
+                return;
+            }
+
+            if (userData.password.length < 3) {
+                meetingSystem.showToast('⚠️ Password must be at least 3 characters', 'warning');
+                return;
+            }
+
+            // Check if username already exists
+            const usersRef = db.collection('users');
+            const snapshot = await usersRef.where('username', '==', userData.username).get();
+            
+            if (!snapshot.empty) {
+                meetingSystem.showToast('⚠️ Username already exists', 'warning');
+                return;
+            }
+
+            // Add user to database
+            await databaseService.addUser(userData);
+            meetingSystem.showToast('✅ User added successfully!', 'success');
+            this.closeAddModal();
+            await this.loadUsersTable();
+            
+        } catch (error) {
+            console.error('Error adding new user:', error);
+            meetingSystem.showToast('❌ Error adding user: ' + error.message, 'error');
         }
     },
 
@@ -737,7 +831,7 @@ const adminPanel = {
     },
 
     addUser: function() {
-        meetingSystem.showToast('👤 Add New User - This would open a user creation form in a full implementation.', 'info');
+        this.openAddModal();
     },
 
     editUser: function(userId) {
@@ -834,7 +928,7 @@ function setupDashboard() {
     
     // Add Admin link for HOD
     const adminLink = currentUser.role === 'hod' ? 
-        '<li><a href="#" class="nav-link" data-page="admin">👨Admin Panel</a></li>' : '';
+        '<li><a href="#" class="nav-link" data-page="admin">Admin Panel</a></li>' : '';
     
     navList.innerHTML = `
         <li><a href="#" class="nav-link active" data-page="home">Home</a></li>
@@ -1280,96 +1374,6 @@ function showAppPage() {
     if (appPage) appPage.classList.remove("hidden");
 }
 
-// ===== DUPLICATE CLEANUP FUNCTION =====
-// TEMPORARY: Clean duplicate staff members from database
-window.cleanDuplicateStaff = async function() {
-    try {
-        console.log('🧹 Cleaning duplicate staff members...');
-        
-        const allUsers = await databaseService.getAllUsers();
-        const staffUsers = allUsers.filter(user => user.role === 'staff' || user.role === 'hod');
-        
-        // Find duplicates by username
-        const usernameMap = new Map();
-        const duplicates = [];
-        
-        staffUsers.forEach(user => {
-            if (usernameMap.has(user.username)) {
-                duplicates.push(user);
-            } else {
-                usernameMap.set(user.username, user);
-            }
-        });
-        
-        console.log(`🗑️ Found ${duplicates.length} duplicate staff members to delete:`, duplicates);
-        
-        if (duplicates.length === 0) {
-            console.log('✅ No duplicates found!');
-            meetingSystem.showToast('✅ No duplicate staff members found!', 'success');
-            return;
-        }
-        
-        // Delete duplicates
-        for (const duplicate of duplicates) {
-            await databaseService.deleteUser(duplicate.id);
-            console.log(`✅ Deleted duplicate: ${duplicate.name} (${duplicate.username})`);
-        }
-        
-        console.log(`✅ Successfully cleaned ${duplicates.length} duplicates`);
-        meetingSystem.showToast(`✅ Successfully cleaned ${duplicates.length} duplicate staff members!`, 'success');
-        
-        // Refresh staff list
-        if (currentUser) {
-            renderStaffList();
-        }
-        
-    } catch (error) {
-        console.error('Error cleaning duplicates:', error);
-        meetingSystem.showToast('❌ Error cleaning duplicates: ' + error.message, 'error');
-    }
-};
-
-// DEBUG FUNCTION - Check database contents
-window.debugDatabase = async function() {
-    console.log('🔍 DEBUG DATABASE CONTENTS:');
-    
-    try {
-        // Check meetings
-        const meetingsSnapshot = await db.collection('meetings').get();
-        console.log('Meetings:', meetingsSnapshot.size);
-        meetingsSnapshot.forEach(doc => {
-            const data = doc.data();
-            console.log('Meeting:', doc.id, {
-                from: data.fromUserName,
-                to: data.toUserName,
-                purpose: data.purpose,
-                status: data.status,
-                createdAt: data.createdAt ? data.createdAt.toDate() : 'No date'
-            });
-        });
-        
-        // Check notifications
-        const notificationsSnapshot = await db.collection('notifications').get();
-        console.log('Notifications:', notificationsSnapshot.size);
-        notificationsSnapshot.forEach(doc => {
-            const data = doc.data();
-            console.log('Notification:', doc.id, {
-                to: data.toUserId,
-                message: data.message,
-                read: data.read,
-                createdAt: data.createdAt ? data.createdAt.toDate() : 'No date'
-            });
-        });
-        
-        // Check users
-        const usersSnapshot = await db.collection('users').get();
-        console.log('👥 Users:', usersSnapshot.size);
-        
-    } catch (error) {
-        console.error('Debug error:', error);
-    }
-};
-
 // Make functions global
 window.currentUser = currentUser;
 window.updateAlerts = updateAlerts;
@@ -1420,12 +1424,15 @@ style.textContent = `
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     
-    #editUserModal .modal-content {
+    #editUserModal .modal-content,
+    #addUserModal .modal-content {
         max-width: 500px;
     }
     
     #editUserModal input,
-    #editUserModal select {
+    #editUserModal select,
+    #addUserModal input,
+    #addUserModal select {
         width: 100%;
         padding: 12px;
         margin: 8px 0;
@@ -1436,14 +1443,18 @@ style.textContent = `
     }
     
     #editUserModal input:focus,
-    #editUserModal select:focus {
+    #editUserModal select:focus,
+    #addUserModal input:focus,
+    #addUserModal select:focus {
         outline: none;
         border-color: var(--primary-color);
         box-shadow: 0 0 5px rgba(37, 117, 252, 0.3);
     }
     
     .dark-mode #editUserModal input,
-    .dark-mode #editUserModal select {
+    .dark-mode #editUserModal select,
+    .dark-mode #addUserModal input,
+    .dark-mode #addUserModal select {
         background: #2c2c2c;
         border-color: #444;
         color: var(--text-primary);
